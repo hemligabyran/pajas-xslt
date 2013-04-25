@@ -178,18 +178,18 @@ abstract class Pajas_Xsltcontroller extends Controller
 			}
 			else
 			{
-				$this->response->headers('Content-Type', 'application/xml; encoding='.Kohana::$charset.';');
+				$this->response->headers('Content-Type', 'application/xml; encoding='.Kohana::$charset);
 				echo $this->dom->saveXML();
 			}
 		}
 		elseif ($this->transform == 'XML')
 		{
-			$this->response->headers('Content-Type', 'application/xml; encoding='.Kohana::$charset.';');
+			$this->response->headers('Content-Type', 'application/xml; encoding='.Kohana::$charset);
 			echo $this->dom->saveXML();
 		}
 		elseif ($this->transform == 'JSON')
 		{
-			$this->response->headers('Content-type: application/json; encoding='.Kohana::$charset.';');
+			$this->response->headers('Content-type', 'application/json; encoding='.Kohana::$charset);
 			echo json_encode(xml::to_Array($this->dom->saveXML()));
 		}
 
