@@ -91,7 +91,6 @@ abstract class Pajas_Xsltcontroller extends Controller
 
 		// Format URL params
 		$url_params[] = $_GET;
-		$url_params[] = $this->request->param();
 		foreach ($url_params as $key => $url_param)
 		{
 			if (is_array($url_param))
