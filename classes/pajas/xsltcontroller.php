@@ -114,7 +114,6 @@ abstract class Pajas_Xsltcontroller extends Controller
 				'url_params'  => $url_params,
 				'post_params' => $_POST,
 				'is_ajax'     => ($this->request->is_ajax()) ? 'true' : 'false',
-				'browser'     => array('name' => Request::user_agent('browser'), 'version' => Request::user_agent('version')),
 			),
 			$this->xml_meta
 		);
