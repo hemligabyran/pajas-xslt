@@ -261,7 +261,7 @@ class Pajas_Controller_Media extends Controller
 		if ($file)
 		{
 			$this->response->headers('Content-type', 'text/xml; encoding='.Kohana::$charset.';');
-			echo file_get_contents($file);
+			$this->response->body(file_get_contents($file));
 		}
 		else
 		{
