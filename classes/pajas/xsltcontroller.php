@@ -152,9 +152,8 @@ abstract class Pajas_Xsltcontroller extends Controller
 			$extra_xslt_path = '';
 			$extra_path_parts = explode('/', $this->xslt_stylesheet);
 			foreach ($extra_path_parts as $nr => $extra_path_part)
-			{
-				if ($nr < (count($extra_path_parts) - 1)) $extra_xslt_path .= $extra_path_part . '/';
-			}
+				if ($nr < (count($extra_path_parts) - 1))
+					$extra_xslt_path .= $extra_path_part . '/';
 
 			// See if we have a user agent that triggers the server side HTML generation
 			$user_agent_trigger = FALSE;
@@ -170,24 +169,27 @@ abstract class Pajas_Xsltcontroller extends Controller
 				$proc = new xsltprocessor();
 				$proc->importStyleSheet($xslt);
 
-				echo $proc->transformToXML($this->dom);
+				$this->response->body($proc->transformToXML($this->dom));
 			}
 			else
 			{
 				$this->response->headers('Content-Type', 'application/xml; encoding='.Kohana::$charset);
-				echo $this->dom->saveXML();
+				$this->response->body($this->dom->saveXML());
 			}
 		}
 		elseif ($this->transform == 'XML')
 		{
 			$this->response->headers('Content-Type', 'application/xml; encoding='.Kohana::$charset);
-			echo $this->dom->saveXML();
+			$this->response->body($this->dom->saveXML());
 		}
 		elseif ($this->transform == 'JSON')
 		{
 			$this->response->headers('Content-type', 'application/json; encoding='.Kohana::$charset);
-			echo json_encode(xml::to_Array($this->dom->saveXML()));
+			$this->response->body(json_encode(xml::to_Array($this->dom->saveXML())));
 		}
+
+		// Generate and add an Etag for client side cache control
+		$this->response->headers('ETag', $this->response->generate_etag());
 
 		return TRUE;
 	}
@@ -357,8 +359,6 @@ Array
 		xml::to_XML($formatted_formdata, $this->xml_content_formdata);
 		return TRUE;
 	}
-
-
 
 	private function format_array($formdata)
 	{
