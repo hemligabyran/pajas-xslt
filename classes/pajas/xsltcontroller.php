@@ -130,8 +130,6 @@ abstract class Pajas_Xsltcontroller extends Controller
 		}
 	}
 
-	public function before() {}
-
 	/**
 	 * Render the page - this is ran automaticly
 	 *
@@ -196,6 +194,21 @@ abstract class Pajas_Xsltcontroller extends Controller
 
 	public function after()
 	{
+		if (class_exists('User'))
+		{
+			// If page is restricted, check if visitor is logged in, and got access
+			// Check if the page is restricted
+			$user = User::instance();
+
+			if ( ! isset($_SERVER['REQUEST_URI'])) $_SERVER['REQUEST_URI'] = '';
+
+			if ( ! $user->has_access_to($_SERVER['REQUEST_URI']) && $this->ignore_acl == FALSE)
+			{
+				if ($this->acl_redirect_url) $this->redirect($this->acl_redirect_url);
+				else                         throw new HTTP_Exception_403('403 Forbidden');
+			}
+		}
+
 		if (Kohana::$profiling === TRUE)
 		{
 			xml::to_XML(
