@@ -111,16 +111,23 @@ class Pajas_Controller_Media extends Controller
 			$this->response->headers('Content-Type', 'content-type: '.$mime.'; encoding='.Kohana::$charset.';');
 
 			// Getting headers sent by the client.
-			$headers = apache_request_headers();
+			$headers = array();
+			foreach ($_SERVER as $key => $value)
+			{
+				if (substr($key, 0, 5) == 'HTTP_')
+				{
+					$key = str_replace(' ','-', ucwords(strtolower(str_replace('_',' ', substr($key, 5)))));
+					$headers[$key] = $value;
+				}
+			}
 
 			if ($cached_filename)
 				$file = $cached_filename;
 
 			$this->response->headers('Last-Modified', gmdate('D, d M Y H:i:s', filemtime($file)).' GMT');
 
-
 			// Checking if the client is validating his cache and if it is current.
-			if (isset($headers['If-Modified-Since']) && (strtotime($headers['If-Modified-Since']) == filemtime($file)))
+			if (isset($_SERVER['If-Modified-Since']) && (strtotime($headers['If-Modified-Since']) > filemtime($file)))
 			{
 				// Client's cache IS current, so we just respond '304 Not Modified'.
 				$this->response->status(304);
