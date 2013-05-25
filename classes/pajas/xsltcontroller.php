@@ -188,8 +188,8 @@ abstract class Pajas_Xsltcontroller extends Controller
 			$this->response->body(json_encode(xml::to_Array($this->dom->saveXML())));
 		}
 
-		// Generate and add an Etag for client side cache control
-		$this->response->headers('ETag', $this->response->generate_etag());
+		// Check client cache (ETag) and return 304 if not modified
+		$this->response->check_cache(NULL, $this->request);
 
 		return TRUE;
 	}
