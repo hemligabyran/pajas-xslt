@@ -106,7 +106,7 @@ abstract class Pajas_Xsltcontroller extends Controller
 		xml::to_XML(
 			array(
 				'protocol'    => (isset($_SERVER['HTTPS'])) ? 'https' : 'http',
-				'domain'      => $_SERVER['SERVER_NAME'],
+				'domain'      => isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME'],
 				'base'        => URL::base(),
 				'path'        => $this->request->uri(),
 				'action'      => $this->request->action(),
