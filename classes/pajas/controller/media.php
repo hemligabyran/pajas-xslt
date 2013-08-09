@@ -65,6 +65,9 @@ class Pajas_Controller_Media extends Controller
 			if ( ! (isset($_GET['maxheight']) && preg_match('/^\d+$/', $_GET['maxheight']))) $_GET['maxheight'] = FALSE;
 
 			// Find out new dimensions
+			if ($_GET['maxwidth']  > $original_width)  $_GET['maxwidth']  = $original_width;
+			if ($_GET['maxheight'] > $original_height) $_GET['maxheight'] = $original_height;
+
 			if ($_GET['maxwidth'] && $_GET['maxheight'] && ! $_GET['height'] && ! $_GET['width'])
 			{
 				if (($_GET['maxwidth'] / $_GET['maxheight']) < $wh_ratio) $_GET['width']  = $_GET['maxwidth'];
