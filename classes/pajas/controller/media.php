@@ -19,6 +19,18 @@ class Pajas_Controller_Media extends Controller
 		}
 	}
 
+	public function action_favicon()
+	{
+		$favicon_path = APPPATH.'/img/favicon.ico';
+		if (file_exists($favicon_path))
+		{
+			$this->response->headers('Last-Modified', gmdate('D, d M Y H:i:s', filemtime($favicon_path)).' GMT');
+			$this->response->headers('Content-Type', 'content-type: image/x-icon; encoding=utf-8');
+			$this->response->body(file_get_contents($favicon_path));
+		}
+		else throw new Http_Exception_404('File not found!');
+	}
+
 	public function action_fonts()
 	{
 		$path                   = $this->request->param('path');
@@ -35,7 +47,7 @@ class Pajas_Controller_Media extends Controller
 			elseif ($path_info['extension'] == 'ttf')  $this->response->headers('Content-Type', 'font/ttf');
 			elseif ($path_info['extension'] == 'woff') $this->response->headers('Content-Type', 'application/x-font-woff');
 
-			echo file_get_contents($file);
+			$this->response->body(file_get_contents($file));
 		}
 		else throw new Http_Exception_404('File not found!');
 	}

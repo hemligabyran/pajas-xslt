@@ -40,3 +40,10 @@ Route::set('user_content/images', 'user_content/images/<file>',
 		'controller' => 'media',
 		'action'     => 'user_content_image',
 	));
+
+// Favicon in the application/img folder
+Route::set('favicon', 'favicon.ico')
+	->defaults(array(
+		'controller' => 'media',
+		'action'     => 'favicon',
+	));
