@@ -89,34 +89,6 @@ abstract class Pajas_Xsltcontroller extends Controller
 		// Create the meta node
 		$this->xml_meta = $this->xml->appendChild($this->dom->createElement('meta'));
 
-		// Format URL params
-		$url_params = $_GET;
-		foreach ($url_params as $key => $url_param)
-		{
-			if (is_array($url_param))
-			{
-				foreach ($url_param as $nr => $data)
-				{
-					$url_params[$nr.$key] = $data;
-					unset($url_params[$key]);
-				}
-			}
-		}
-
-		xml::to_XML(
-			array(
-				'protocol'    => (isset($_SERVER['HTTPS'])) ? 'https' : 'http',
-				'domain'      => isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME'],
-				'base'        => URL::base(),
-				'path'        => $this->request->uri(),
-				'action'      => $this->request->action(),
-				'controller'  => $this->request->controller(),
-				'url_params'  => $url_params,
-				'is_ajax'     => ($this->request->is_ajax()) ? 'true' : 'false',
-			),
-			$this->xml_meta
-		);
-
 		// Create the content node
 		$this->xml_content = $this->xml->appendChild($this->dom->createElement('content'));
 
@@ -210,6 +182,35 @@ abstract class Pajas_Xsltcontroller extends Controller
 				else                         throw new HTTP_Exception_403('403 Forbidden');
 			}
 		}
+
+		// Format URL params
+		$url_params = $_GET;
+		foreach ($url_params as $key => $url_param)
+		{
+			if (is_array($url_param))
+			{
+				foreach ($url_param as $nr => $data)
+				{
+					$url_params[$nr.$key] = $data;
+					unset($url_params[$key]);
+				}
+			}
+		}
+
+		xml::to_XML(
+			array(
+				'protocol'    => (isset($_SERVER['HTTPS'])) ? 'https' : 'http',
+				'domain'      => isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME'],
+				'base'        => URL::base(),
+				'path'        => $this->request->uri(),
+				'action'      => $this->request->action(),
+				'controller'  => $this->request->controller(),
+				'url_params'  => $url_params,
+				'is_ajax'     => ($this->request->is_ajax()) ? 'true' : 'false',
+			),
+			$this->xml_meta
+		);
+
 
 		if (Kohana::$profiling === TRUE)
 		{
