@@ -211,6 +211,23 @@ abstract class Pajas_Xsltcontroller extends Controller
 			$this->xml_meta
 		);
 
+		if (class_exists('User'))
+		{
+			$user = User::instance();
+
+			if ($user->logged_in())
+			{
+				$user_data = array(
+					'@id'      => $user->id,
+					'username' => $user->get_username(),
+					'data'     => array(),
+				);
+				foreach ($user->get_user_data() as $field_name => $field_value)
+					$user_data['data']['field name="' . $field_name . '"'] = $field_value;
+
+				xml::to_XML(array('user_data' => $user_data), $this->xml_meta);
+			}
+		}
 
 		if (Kohana::$profiling === TRUE)
 		{
