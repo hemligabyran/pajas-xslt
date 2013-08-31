@@ -8,10 +8,21 @@ abstract class Pajas_Xsltcontroller extends Controller
 {
 
 	/**
+	 * URL to redirect to if this URL is restricted
+	 * If set to FALSE will give 403 instead
+	 */
+	public $acl_redirect_url = FALSE;
+
+	/**
 	 * If set to TRUE, render() will automaticly be ran
 	 * when the controller is done.
 	 */
 	public $auto_render = TRUE;
+
+	/**
+	 * Generic errors to put in the XML
+	 */
+	public $errors = array();
 
 	/**
 	 * If set will show page even if the user has no access to it
@@ -20,10 +31,9 @@ abstract class Pajas_Xsltcontroller extends Controller
 	public $ignore_acl = FALSE;
 
 	/**
-	 * URL to redirect to if this URL is restricted
-	 * If set to FALSE will give 403 instead
+	 * Generic messages to put in the XML
 	 */
-	public $acl_redirect_url = FALSE;
+	public $messages = array();
 
 	/**
 	 * Decides where the transformation of XSLT->HTML
@@ -51,7 +61,6 @@ abstract class Pajas_Xsltcontroller extends Controller
 	 */
 	public $xslt_stylesheet = FALSE;
 
-
 	/**
 	 * Creates a new controller instance. Each controller must be constructed
 	 * with the request object that created it.
@@ -63,7 +72,7 @@ abstract class Pajas_Xsltcontroller extends Controller
 	public function __construct(Request $request, Response $response)
 	{
 		parent::__construct($request, $response);
-		$session = Session::instance();
+		$this->session = Session::instance();
 
 		// Set transformation
 		if (isset($_GET['transform']))
@@ -92,14 +101,190 @@ abstract class Pajas_Xsltcontroller extends Controller
 		// Create the content node
 		$this->xml_content = $this->xml->appendChild($this->dom->createElement('content'));
 
-		// If any delayed messages exists, add them and clean the session
-		if ( ! empty($_SESSION['messages']))
-		{
-			foreach ($_SESSION['messages'] as $message)
-				$this->add_message($message);
+		// Add sticky errors and messages
+		$this->errors = $this->session->get('xsltcontroller_errors');
+		if ( ! $this->errors) $this->errors = array();
+		$this->messages = $this->session->get('xsltcontroller_messages');
+		if ( ! $this->messages) $this->messages = array();
+		$this->session->delete('xsltcontroller_errors');
+		$this->session->delete('xsltcontroller_messages');
+	}
 
-			$_SESSION['messages'] = array();
+	/**
+	 * Add a simple error message
+	 *
+	 * @param str $error
+	 * @param str $identifier - an ID to give to this message for reference
+	 * @param bol $sticky - sticks around for one redirect
+	 * @return boolean
+	 */
+	public function add_error($error, $identifier = FALSE, $sticky = FALSE)
+	{
+		if ($sticky)
+		{
+			$current_messages = $this->session->get('xsltcontroller_errors');
+			if ( ! $current_messages) $current_messages = array();
+			$current_messages[] = array('identifier' => $identifier, 'message' => $error);
+			$this->session->set('xsltcontroller_errors', $current_messages);
 		}
+		else $this->errors[] = array('identifier' => $identifier, 'message' => $error);
+
+		return TRUE;
+	}
+
+	/**
+	 * Add simple message
+	 *
+	 * @param str $message
+	 * @param str $identifier - an ID to give to this message for reference
+	 * @param bol $sticky - sticks around for one redirect
+	 * @return boolean
+	 */
+	public function add_message($message, $identifier = FALSE, $sticky = FALSE)
+	{
+		if ($sticky)
+		{
+			$current_messages = $this->session->get('xsltcontroller_messages');
+			if ( ! $current_messages) $current_messages = array();
+			$current_messages[] = array('identifier' => $identifier, 'message' => $message);
+			$this->session->set('xsltcontroller_messages', $current_messages);
+		}
+		else $this->messages[] = array('identifier' => $identifier, 'message' => $message);
+
+
+		return TRUE;
+	}
+
+	public function after()
+	{
+		if (class_exists('User'))
+		{
+			// If page is restricted, check if visitor is logged in, and got access
+			// Check if the page is restricted
+			$user = User::instance();
+
+			if ( ! isset($_SERVER['REQUEST_URI'])) $_SERVER['REQUEST_URI'] = '';
+
+			if ( ! $user->has_access_to($_SERVER['REQUEST_URI']) && $this->ignore_acl == FALSE)
+			{
+				if ($this->acl_redirect_url) $this->redirect($this->acl_redirect_url);
+				else                         throw new HTTP_Exception_403('403 Forbidden');
+			}
+		}
+
+		// Format URL params
+		$url_params = $_GET;
+		foreach ($url_params as $key => $url_param)
+		{
+			if (is_array($url_param))
+			{
+				foreach ($url_param as $nr => $data)
+				{
+					$url_params[$nr.$key] = $data;
+					unset($url_params[$key]);
+				}
+			}
+		}
+
+		xml::to_XML(
+			array(
+				'protocol'    => (isset($_SERVER['HTTPS'])) ? 'https' : 'http',
+				'domain'      => isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME'],
+				'base'        => URL::base(),
+				'path'        => $this->request->uri(),
+				'action'      => $this->request->action(),
+				'controller'  => $this->request->controller(),
+				'url_params'  => $url_params,
+				'is_ajax'     => ($this->request->is_ajax()) ? 'true' : 'false',
+			),
+			$this->xml_meta
+		);
+
+		if (class_exists('User'))
+		{
+			$user = User::instance();
+
+			if ($user->logged_in())
+			{
+				$user_data = array(
+					'@id'      => $user->id,
+					'username' => $user->get_username(),
+					'data'     => array(),
+				);
+				foreach ($user->get_user_data() as $field_name => $field_value)
+				{
+					if ( ! is_array($field_value))
+						$field_value = array($field_value);
+
+					foreach ($field_value as $nr => $single_value)
+						$user_data['data'][$nr.'field name="'.$field_name.'"'] = $single_value;
+				}
+
+				xml::to_XML(array('user_data' => $user_data), $this->xml_meta);
+			}
+		}
+
+		if (Kohana::$profiling === TRUE)
+		{
+			xml::to_XML(
+				array('benchmark' => Profiler::application()),
+				$this->xml_meta
+			);
+		}
+
+		// Add errors
+		foreach ($this->errors as $error)
+		{
+			if ( ! isset($this->xml_content_errors))
+				$this->xml_content_errors = $this->xml_content->appendChild($this->dom->createElement('errors'));
+
+			if ($error['identifier']) $error = array('@id' => $error['identifier'], $error['message']);
+
+			xml::to_XML(array('error' => $error), $this->xml_content_errors);
+		}
+
+		// Add messages
+		foreach ($this->messages as $message)
+		{
+			if ( ! isset($this->xml_content_messages))
+				$this->xml_content_messages = $this->xml_content->appendChild($this->dom->createElement('messages'));
+
+			if ($message['identifier']) $message = array('@id' => $message['identifier'], $message['message']);
+
+			xml::to_XML(array('message' => $message), $this->xml_content_messages);
+		}
+
+		if ($this->auto_render == TRUE)
+		{
+			// Render the template immediately after the controller method
+			$this->render();
+		}
+	}
+
+	/**
+	 * Redirect to another URI. All further execution is terminated
+	 *
+	 * @param str $uri - If left out, redirects to previous uri.
+	 */
+	public function redirect($uri = FALSE)
+	{
+
+		if ($uri == FALSE)
+		{
+			if (isset($_SESSION['redirect']))
+			{
+				$redirect = $_SESSION['redirect'];
+				unset($_SESSION['redirect']);
+				$uri = $redirect;
+			}
+			elseif (isset($_SERVER['HTTP_REFERER']))
+				$uri = $_SERVER['HTTP_REFERER'];
+			else
+				$uri = Kohana::$base_url;
+		}
+
+		if (URL::base().$this->request->uri() != $uri)
+			$this->request->redirect($uri);
 	}
 
 	/**
@@ -166,201 +351,6 @@ abstract class Pajas_Xsltcontroller extends Controller
 		return TRUE;
 	}
 
-	public function after()
-	{
-		if (class_exists('User'))
-		{
-			// If page is restricted, check if visitor is logged in, and got access
-			// Check if the page is restricted
-			$user = User::instance();
-
-			if ( ! isset($_SERVER['REQUEST_URI'])) $_SERVER['REQUEST_URI'] = '';
-
-			if ( ! $user->has_access_to($_SERVER['REQUEST_URI']) && $this->ignore_acl == FALSE)
-			{
-				if ($this->acl_redirect_url) $this->redirect($this->acl_redirect_url);
-				else                         throw new HTTP_Exception_403('403 Forbidden');
-			}
-		}
-
-		// Format URL params
-		$url_params = $_GET;
-		foreach ($url_params as $key => $url_param)
-		{
-			if (is_array($url_param))
-			{
-				foreach ($url_param as $nr => $data)
-				{
-					$url_params[$nr.$key] = $data;
-					unset($url_params[$key]);
-				}
-			}
-		}
-
-		xml::to_XML(
-			array(
-				'protocol'    => (isset($_SERVER['HTTPS'])) ? 'https' : 'http',
-				'domain'      => isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME'],
-				'base'        => URL::base(),
-				'path'        => $this->request->uri(),
-				'action'      => $this->request->action(),
-				'controller'  => $this->request->controller(),
-				'url_params'  => $url_params,
-				'is_ajax'     => ($this->request->is_ajax()) ? 'true' : 'false',
-			),
-			$this->xml_meta
-		);
-
-		if (class_exists('User'))
-		{
-			$user = User::instance();
-
-			if ($user->logged_in())
-			{
-				$user_data = array(
-					'@id'      => $user->id,
-					'username' => $user->get_username(),
-					'data'     => array(),
-				);
-				foreach ($user->get_user_data() as $field_name => $field_value)
-					$user_data['data']['field name="' . $field_name . '"'] = $field_value;
-
-				xml::to_XML(array('user_data' => $user_data), $this->xml_meta);
-			}
-		}
-
-		if (Kohana::$profiling === TRUE)
-		{
-			xml::to_XML(
-				array('benchmark' => Profiler::application()),
-				$this->xml_meta
-			);
-		}
-
-		if ($this->auto_render == TRUE)
-		{
-			// Render the template immediately after the controller method
-			$this->render();
-		}
-	}
-
-	/**
-	 * Add a simple error message
-	 *
-	 * @param str $error
-	 * @return boolean
-	 */
-	public function add_error($error, $identifier = FALSE)
-	{
-		if ( ! isset($this->xml_content_errors))
-			$this->xml_content_errors = $this->xml_content->appendChild($this->dom->createElement('errors'));
-
-		if ($identifier) $error = array('@id' => $identifier, $error);
-
-		xml::to_XML(array('error' => $error), $this->xml_content_errors);
-		return TRUE;
-	}
-
-	/**
-	 * Add form errors
-	 *
-	 * @param arr $errors - as from Validate::errors()
-	 * @return boolean
-	 */
-	public function add_form_errors($errors)
-	{
-/*
-Array
-(
-    [username] => Array
-        (
-            [0] => Valid::not_empty
-            [1] => User::username_available
-        )
-
-    [password] => Array
-        (
-            [0] => Valid::not_empty
-        )
-
-    // To add a message:
-    [username] => 'Username is to ugly'
-
-)*/
-
-
-		if ( ! isset($this->xml_content_errors))
-			$this->xml_content_errors = $this->xml_content->appendChild($this->dom->createElement('errors'));
-
-		if ( ! isset($this->xml_content_errors_form_errors))
-			$this->xml_content_errors_form_errors = $this->xml_content_errors->appendChild($this->dom->createElement('form_errors'));
-
-		foreach ($errors as $field => $field_errors)
-		{
-			if (is_array($field_errors))
-			{
-				foreach ($field_errors as $field_error)
-					xml::to_XML(array($field => $field_error), $this->xml_content_errors_form_errors);
-			}
-			else xml::to_XML(array($field => array('message' => $field_errors)), $this->xml_content_errors_form_errors);
-		}
-
-		return TRUE;
-	}
-
-	/**
-	 * Add simple message
-	 *
-	 * @param str $message
-	 * @param bol $sticky - sticks around for one redirect
-	 * @return boolean
-	 */
-	public function add_message($message, $sticky = FALSE)
-	{
-		if ($sticky)
-		{
-			if ( ! isset($_SESSION['messages']))
-				$_SESSION['messages'] = array();
-
-			$_SESSION['messages'][] = $message;
-		}
-		else
-		{
-			if ( ! isset($this->xml_content_messages))
-				$this->xml_content_messages = $this->xml_content->appendChild($this->dom->createElement('messages'));
-
-			xml::to_XML(array('message' => $message), $this->xml_content_messages);
-		}
-
-		return TRUE;
-	}
-
-	/**
-	 * Redirect to another URI. All further execution is terminated
-	 *
-	 * @param str $uri - If left out, redirects to previous uri.
-	 */
-	public function redirect($uri = FALSE)
-	{
-
-		if ($uri == FALSE)
-		{
-			if (isset($_SESSION['redirect']))
-			{
-				$redirect = $_SESSION['redirect'];
-				unset($_SESSION['redirect']);
-				$uri = $redirect;
-			}
-			elseif (isset($_SERVER['HTTP_REFERER']))
-				$uri = $_SERVER['HTTP_REFERER'];
-			else
-				$uri = Kohana::$base_url;
-		}
-
-		if (URL::base().$this->request->uri() != $uri)
-			$this->request->redirect($uri);
-	}
-
 	/**
 	 * Set form data - the data that should fill out forms
 	 *
@@ -377,7 +367,6 @@ Array
 		xml::to_XML($formatted_formdata, $this->xml_content_formdata);
 		return TRUE;
 	}
-
 	private function format_array($formdata)
 	{
 		$formatted_formdata = array();
@@ -386,7 +375,7 @@ Array
 			if (is_array($data))
 			{
 				$formatted_formdata[] = array(
-					'@id'			 => $field,
+					'@id'   => $field,
 					'field' => $this->format_array($data),
 				);
 			}
