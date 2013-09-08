@@ -283,7 +283,22 @@ abstract class Pajas_Xsltcontroller extends Controller
 				$uri = Kohana::$base_url;
 		}
 
-		if (URL::base().$this->request->uri() != $uri)
+		$current_url = URL::base().$this->request->uri();
+
+		$question_mark = TRUE;
+		foreach ($_GET as $key => $value)
+		{
+			if ($question_mark)
+			{
+				$current_url .= '?';
+				$question_mark = FALSE;
+			}
+			else $current_url = '&';
+
+			$key.'='.$value;
+		}
+
+		if ($current_url != $uri)
 			$this->request->redirect($uri);
 	}
 
