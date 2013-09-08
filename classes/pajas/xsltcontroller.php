@@ -268,6 +268,8 @@ abstract class Pajas_Xsltcontroller extends Controller
 	 */
 	public function redirect($uri = FALSE)
 	{
+		// Never redirect AJAX calls
+		if (Request::current()->is_ajax()) return TRUE;
 
 		if ($uri == FALSE)
 		{
