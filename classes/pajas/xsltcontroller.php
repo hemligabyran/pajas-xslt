@@ -285,18 +285,7 @@ abstract class Pajas_Xsltcontroller extends Controller
 
 		$current_url = URL::base().$this->request->uri();
 
-		$question_mark = TRUE;
-		foreach ($_GET as $key => $value)
-		{
-			if ($question_mark)
-			{
-				$current_url .= '?';
-				$question_mark = FALSE;
-			}
-			else $current_url = '&';
-
-			$key.'='.$value;
-		}
+		if (strlen($_SERVER['QUERY_STRING'])) $current_url .= '?'.$_SERVER['QUERY_STRING'];
 
 		if ($current_url != $uri)
 			$this->request->redirect($uri);
