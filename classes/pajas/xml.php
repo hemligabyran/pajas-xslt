@@ -23,6 +23,11 @@ class Pajas_Xml
 		return array_map(array(__CLASS__, __FUNCTION__), $object);
 	}
 
+	public static function strip_unprintable_chars($str)
+	{
+		return preg_replace('/[\x00-\x1F\x7f-\xFF]/', '', $str);
+	}
+
 	/**
 	 * Convert XML to array
 	 *
@@ -318,7 +323,7 @@ class Pajas_Xml
 	 */
 	public static function to_XML($data, $container = NULL, $group = NULL, $attributes = array(), $text_values = array(), $xml_fragments = array(), $alter_code = array())
 	{
-		if (is_string($attributes))  $attributes = array($attributes);
+		if (is_string($attributes))  $attributes  = array($attributes);
 		if (is_string($text_values)) $text_values = array($text_values);
 
 		// Make sure the data is always an array
@@ -362,14 +367,14 @@ class Pajas_Xml
 			$element_attributes = array();
 			foreach (explode(' ',$key) as $part)
 			{
-				if (!$tag)
+				if ( ! $tag)
 				{
 					$tag = $part;
-					while (preg_match('/^[0-9]/',$tag))
+					while (preg_match('/^[0-9]/', $tag))
 					{
 						// The first character can not be a numeric char
 						// So we strip them off
-						$tag = substr($tag,1);
+						$tag = substr($tag, 1);
 					}
 				}
 				else
@@ -388,7 +393,7 @@ class Pajas_Xml
 				}
 			}
 
-			if ($container === NULL && !isset($alt_container))
+			if ($container === NULL && ! isset($alt_container))
 			{
 				// If we have no container, the tag must be the root element
 				if ($tag == '')
@@ -398,14 +403,14 @@ class Pajas_Xml
 				}
 				$DOM_element = $DOM_document->createElement($tag);
 				$DOM_document->appendChild($DOM_element);
-				if (!is_array($value))
+				if ( ! is_array($value))
 				{
 					if (in_array($key,array_keys($alter_code)))
 					{
 						$func_name = create_function('$value,$name', $alter_code[$key]);
 						$value     = $func_name($value, $key);
 					}
-					$DOM_element->appendChild($DOM_document->createTextNode($value));
+					$DOM_element->appendChild($DOM_document->createTextNode(self::strip_unprintable_chars($value)));
 				}
 				else
 					$DOM_element = self::to_XML($value, $DOM_element, NULL, $attributes, $text_values, $xml_fragments, $alter_code);
@@ -437,7 +442,7 @@ class Pajas_Xml
 							$func_name = create_function('$value,$name', $alter_code[$tag]);
 							$value     = $func_name($value, $tag);
 						}
-						$attribute->appendChild($DOM_document->createTextNode($value));
+						$attribute->appendChild($DOM_document->createTextNode(self::strip_unprintable_chars($value)));
 
 						if (isset($group_element))
 							$group_element->appendChild($attribute);
@@ -455,11 +460,11 @@ class Pajas_Xml
 							$value     = $func_name($value, $tag);
 						}
 						if (isset($group_element))
-							$group_element->appendChild($DOM_document->createTextNode($value));
+							$group_element->appendChild($DOM_document->createTextNode(self::strip_unprintable_chars($value)));
 						elseif (isset($alt_container))
-							$alt_container->appendChild($DOM_document->createTextNode($value));
+							$alt_container->appendChild($DOM_document->createTextNode(self::strip_unprintable_chars($value)));
 						else
-							$container->appendChild($DOM_document->createTextNode($value));
+							$container->appendChild($DOM_document->createTextNode(self::strip_unprintable_chars($value)));
 					}
 					elseif (substr($tag, 0, 1) == '?' || in_array($tag, $xml_fragments))
 					{
@@ -495,7 +500,7 @@ class Pajas_Xml
 							$value     = $func_name($value, $tag);
 						}
 						if (!is_array($value))
-							$DOM_element->appendChild($DOM_document->createTextNode($value));
+							$DOM_element->appendChild($DOM_document->createTextNode(self::strip_unprintable_chars($value)));
 						else
 							$DOM_element = self::to_XML($value, $DOM_element, NULL, $attributes, $text_values, $xml_fragments, $alter_code);
 
@@ -522,11 +527,11 @@ class Pajas_Xml
 					{
 						// This is a simple string value, just add it
 						if (isset($group_element))
-							$group_element->appendChild($DOM_document->createTextNode($value));
+							$group_element->appendChild($DOM_document->createTextNode(self::strip_unprintable_chars($value)));
 						elseif (isset($alt_container))
-							$alt_container->appendChild($DOM_document->createTextNode($value));
+							$alt_container->appendChild($DOM_document->createTextNode(self::strip_unprintable_chars($value)));
 						else
-							$container->appendChild($DOM_document->createTextNode($value));
+							$container->appendChild($DOM_document->createTextNode(self::strip_unprintable_chars($value)));
 					}
 					else
 					{
@@ -545,7 +550,7 @@ class Pajas_Xml
 			foreach ($element_attributes as $attribute => $value)
 			{
 				$attribute = $DOM_element->appendChild($DOM_document->createAttribute($attribute));
-				$attribute->appendChild($DOM_document->createTextNode($value));
+				$attribute->appendChild($DOM_document->createTextNode(self::strip_unprintable_chars($value)));
 			}
 
 		}
