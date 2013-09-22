@@ -246,7 +246,7 @@ class Pajas_Controller_Media extends Controller
 			$this->response->headers('Content-Type', 'content-type: '.$mime.'; encoding='.Kohana::$charset.';');
 
 			// Getting headers sent by the client.
-			$headers = apache_request_headers();
+			$headers = getallheaders();
 
 			if ($cached_filename)
 				$file = $cached_filename;
