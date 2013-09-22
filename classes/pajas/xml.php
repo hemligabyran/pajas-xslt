@@ -25,7 +25,7 @@ class Pajas_Xml
 
 	public static function strip_unprintable_chars($str)
 	{
-		return preg_replace('/[\x00-\x1F\x7f-\xFF]/', '', $str);
+		return preg_replace('/\p{Cc}+/u', '', $str);
 	}
 
 	/**
