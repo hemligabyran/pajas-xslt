@@ -186,9 +186,11 @@ abstract class Pajas_Xsltcontroller extends Controller
 			}
 		}
 
+		list($protocol) = explode('/', strtolower(Request::$initial->protocol()));
+
 		xml::to_XML(
 			array(
-				'protocol'    => (isset($_SERVER['HTTPS'])) ? 'https' : 'http',
+				'protocol'    => $protocol,
 				'domain'      => isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME'],
 				'base'        => URL::base(),
 				'path'        => $this->request->uri(),
