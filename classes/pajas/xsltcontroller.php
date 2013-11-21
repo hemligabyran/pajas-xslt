@@ -354,7 +354,8 @@ abstract class Pajas_Xsltcontroller extends Controller
 		}
 
 		// Check client cache (ETag) and return 304 if not modified
-		$this->response->check_cache(NULL, $this->request);
+		//Disabled, since this should be handeled by the application depending on what it wants to do
+		//$this->response->check_cache(NULL, $this->request);
 
 		return TRUE;
 	}
