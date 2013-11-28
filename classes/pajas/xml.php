@@ -25,7 +25,9 @@ class Pajas_Xml
 
 	public static function strip_unprintable_chars($str)
 	{
-		return preg_replace('/\p{Cc}+/u', '', $str);
+		// Previous stripper also removed newlines. :/
+		//return preg_replace('/\p{Cc}+/u', '', $str);
+		return preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x80-\x9F]/u', '', $str);
 	}
 
 	/**
