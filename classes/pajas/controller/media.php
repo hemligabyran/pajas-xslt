@@ -113,7 +113,7 @@ class Pajas_Controller_Media extends Controller
 				else
 					$cached_filename = Kohana::$cache_dir.'/user_content/'.$path_info['dirname'].'/'.$path_info['basename'].$cache_ending;
 
-				if ( ! file_exists($cached_filename) || filemtime($file) < filemtime($cached_filename))
+				if ( ! file_exists($cached_filename) || filemtime($file) > filemtime($cached_filename))
 				{
 					if ( ! file_exists(pathinfo($cached_filename, PATHINFO_DIRNAME)))
 						exec('mkdir -p '.pathinfo($cached_filename, PATHINFO_DIRNAME));
@@ -182,6 +182,7 @@ class Pajas_Controller_Media extends Controller
 		$path_info = pathinfo($path);
 		$mime      = File::mime_by_ext($path_info['extension']);
 		$file      = Kohana::$config->load('user_content.dir').'/'.$path;
+
 		if ($file && substr($mime, 0, 5) == 'image')
 		{
 			// Find the file ending
@@ -233,7 +234,7 @@ class Pajas_Controller_Media extends Controller
 				else
 					$cached_filename = Kohana::$cache_dir.'/user_content/'.$path_info['dirname'].'/'.$path_info['basename'].$cache_ending;
 
-				if ( ! file_exists($cached_filename) || filemtime($file) < filemtime($cached_filename))
+				if ( ! file_exists($cached_filename) || filemtime($file) > filemtime($cached_filename))
 				{
 					if ( ! file_exists(pathinfo($cached_filename, PATHINFO_DIRNAME)))
 						exec('mkdir -p '.pathinfo($cached_filename, PATHINFO_DIRNAME));
