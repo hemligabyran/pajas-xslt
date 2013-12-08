@@ -31,14 +31,14 @@ foreach (Kohana::$config->load('media') as $name => $URL)
 		));
 }
 
-// User content images
-Route::set('user_content/images', 'user_content/images/<file>',
+// User content
+Route::set('user_content', 'user_content/<file>',
 	array(
 		'file' => '[a-zA-Z0-9_/\.-]+',
 	))
 	->defaults(array(
 		'controller' => 'media',
-		'action'     => 'user_content_image',
+		'action'     => 'user_content',
 	));
 
 // Favicon in the application/img folder

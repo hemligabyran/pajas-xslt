@@ -176,12 +176,12 @@ class Pajas_Controller_Media extends Controller
 		else throw new Http_Exception_404('File not found!');
 	}
 
-	public function action_user_content_image()
+	public function action_user_content()
 	{
 		$path      = $this->request->param('file');
 		$path_info = pathinfo($path);
 		$mime      = File::mime_by_ext($path_info['extension']);
-		$file      = Kohana::$config->load('user_content.dir').'/images/'.$path;
+		$file      = Kohana::$config->load('user_content.dir').'/'.$path;
 		if ($file && substr($mime, 0, 5) == 'image')
 		{
 			// Find the file ending
@@ -269,8 +269,18 @@ class Pajas_Controller_Media extends Controller
 				$this->response->body(file_get_contents($file));
 			}
 		}
+		// File not a supported image, but it exists, so serve it to the end user
+		elseif (file_exists($file))
+		{
+			$this->response->headers('Content-Type', File::mime($file));
+			$this->response->headers('Content-Length', strval(filesize($file)));
+			$this->response->status(200);
+			$this->response->body(file_get_contents($file));
+		}
 		else
 		{
+			var_dump($path);
+			die();
 			// File not found at all
 			throw new Http_Exception_404('File not found!');
 		}
