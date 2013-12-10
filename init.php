@@ -34,7 +34,7 @@ foreach (Kohana::$config->load('media') as $name => $URL)
 // User content
 Route::set('user_content', 'user_content/<file>',
 	array(
-		'file' => '[a-zA-Z0-9_/\.-]+',
+		'file' => '.*',
 	))
 	->defaults(array(
 		'controller' => 'media',
