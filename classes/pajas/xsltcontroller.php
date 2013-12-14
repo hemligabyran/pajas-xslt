@@ -72,7 +72,6 @@ abstract class Pajas_Xsltcontroller extends Controller
 	public function __construct(Request $request, Response $response)
 	{
 		parent::__construct($request, $response);
-		$this->session = Session::instance();
 
 		// Set transformation
 		if (isset($_GET['transform']))
@@ -102,12 +101,19 @@ abstract class Pajas_Xsltcontroller extends Controller
 		$this->xml_content = $this->xml->appendChild($this->dom->createElement('content'));
 
 		// Add sticky errors and messages
-		$this->errors = $this->session->get('xsltcontroller_errors');
-		if ( ! $this->errors) $this->errors = array();
-		$this->messages = $this->session->get('xsltcontroller_messages');
-		if ( ! $this->messages) $this->messages = array();
-		$this->session->delete('xsltcontroller_errors');
-		$this->session->delete('xsltcontroller_messages');
+		if (Session::instance()->get('xsltcontroller_errors', NULL))
+		{
+			$this->errors = Session::instance()->get('xsltcontroller_errors');
+			Session::instance()->delete('xsltcontroller_errors');
+		}
+		else $this->errors = array();
+
+		if (Session::instance()->get('xsltcontroller_messages', NULL))
+		{
+			$this->messages = Session::instance()->get('xsltcontroller_messages');
+			Session::instance()->delete('xsltcontroller_messages');
+		}
+		else $this->messages = array();
 	}
 
 	/**
@@ -122,10 +128,10 @@ abstract class Pajas_Xsltcontroller extends Controller
 	{
 		if ($sticky)
 		{
-			$current_messages = $this->session->get('xsltcontroller_errors');
+			$current_messages = Session::instance()->get('xsltcontroller_errors');
 			if ( ! $current_messages) $current_messages = array();
 			$current_messages[] = array('identifier' => $identifier, 'message' => $error);
-			$this->session->set('xsltcontroller_errors', $current_messages);
+			Session::instance()->set('xsltcontroller_errors', $current_messages);
 		}
 		else $this->errors[] = array('identifier' => $identifier, 'message' => $error);
 
@@ -144,10 +150,10 @@ abstract class Pajas_Xsltcontroller extends Controller
 	{
 		if ($sticky)
 		{
-			$current_messages = $this->session->get('xsltcontroller_messages');
+			$current_messages = Session::instance()->get('xsltcontroller_messages');
 			if ( ! $current_messages) $current_messages = array();
 			$current_messages[] = array('identifier' => $identifier, 'message' => $message);
-			$this->session->set('xsltcontroller_messages', $current_messages);
+			Session::instance()->set('xsltcontroller_messages', $current_messages);
 		}
 		else $this->messages[] = array('identifier' => $identifier, 'message' => $message);
 
@@ -275,10 +281,10 @@ abstract class Pajas_Xsltcontroller extends Controller
 
 		if ($uri == FALSE)
 		{
-			if (isset($_SESSION['redirect']))
+			if (Session::instance()->get('redirect', FALSE))
 			{
-				$redirect = $_SESSION['redirect'];
-				unset($_SESSION['redirect']);
+				$redirect = Session::instance()->get('redirect');
+				Session::instance()->delete('redirect');
 				$uri = $redirect;
 			}
 			elseif (isset($_SERVER['HTTP_REFERER']))
