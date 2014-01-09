@@ -3,6 +3,13 @@
 class Pajas_Controller_Media extends Controller
 {
 
+	public function before()
+	{
+		parent::before();
+
+		ini_set('memory_limit', '128M'); // Needed to handle decently large files
+	}
+
 	public function action_css()
 	{
 		$path = $this->request->param('path');
