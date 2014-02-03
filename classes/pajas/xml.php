@@ -31,6 +31,48 @@ class Pajas_Xml
 	}
 
 	/**
+	 * Strip unwanted tags (and all comments)
+	 *
+	 * @param obj $xml DomDocument
+	 * @param arr $accepted_tags - List of tag names that are ok
+	 *
+	 * @return obj DomDocument
+	 */
+	public static function strip_unwanted_tags($dom, $accepted_tags)
+	{
+		// Remove comments
+		$xpath = new DOMXPath($dom);
+		foreach ($xpath->query('//comment()') as $comment)
+			$comment->parentNode->removeChild($comment);
+
+		foreach ($dom->childNodes as $child_node)
+		{
+			if ($child_node->nodeType == 1)
+			{
+				if ( ! in_array($child_node->nodeName, $accepted_tags))
+					$dom->removeChild($child_node);
+				else
+					self::_strip_unwanted_tags($child_node, $accepted_tags);
+			}
+		}
+
+		return $dom;
+	}
+	public static function _strip_unwanted_tags($node, $accepted_tags)
+	{
+		foreach ($node->childNodes as $child_node)
+		{
+			if ($child_node->nodeType == 1)
+			{
+				if ( ! in_array($child_node->nodeName, $accepted_tags))
+					$node->removeChild($child_node);
+				else
+					self::_strip_unwanted_tags($child_node, $accepted_tags);
+			}
+		}
+	}
+
+	/**
 	 * Convert XML to array
 	 *
 	 * @param $XML - DOMDocument or string
@@ -115,7 +157,6 @@ class Pajas_Xml
 
 		return $array;
 	}
-
 
 	/**
 	 * Creates a DOMNode or DOMDocument of your array, object or SQL
