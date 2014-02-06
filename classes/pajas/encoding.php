@@ -35,7 +35,7 @@ POSSIBILITY OF SUCH DAMAGE.
  * @link     https://github.com/neitanod/forceutf8
  * @example  https://github.com/neitanod/forceutf8
  * @license  Revised BSD
-  */
+ */
 
 class Pajas_Encoding
 {

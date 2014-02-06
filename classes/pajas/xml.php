@@ -88,7 +88,7 @@ class Pajas_Xml
 
 			$XML_string = '<x>'.$XML.'</x>';
 			$XML = new DOMDocument('1.0', 'UTF-8');
-			$XML->loadXML($XML_string);
+			$XML->loadXML(Encoding::fixUTF8($XML_string));
 
 			$array = array();
 
