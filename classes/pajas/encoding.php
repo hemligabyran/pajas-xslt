@@ -37,8 +37,6 @@ POSSIBILITY OF SUCH DAMAGE.
  * @license  Revised BSD
   */
 
-namespace ForceUTF8;
-
 class Pajas_Encoding
 {
 
