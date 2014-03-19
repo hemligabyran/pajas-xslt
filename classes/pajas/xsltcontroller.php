@@ -36,6 +36,11 @@ abstract class Pajas_Xsltcontroller extends Controller
 	public $messages = array();
 
 	/**
+	 * Meta data to be put in the XML
+	 */
+	public $meta = array();
+
+	/**
 	 * Decides where the transformation of XSLT->HTML
 	 * should be done
 	 * ATTENTION! This setting is configurable in xslt.php
@@ -194,7 +199,7 @@ abstract class Pajas_Xsltcontroller extends Controller
 
 		list($protocol) = explode('/', strtolower(Request::$initial->protocol()));
 
-		xml::to_XML(
+		$this->meta = array_merge(
 			array(
 				'protocol'    => $protocol,
 				'domain'      => isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME'],
@@ -205,8 +210,10 @@ abstract class Pajas_Xsltcontroller extends Controller
 				'url_params'  => $url_params,
 				'is_ajax'     => ($this->request->is_ajax()) ? 'true' : 'false',
 			),
-			$this->xml_meta
+			$this->meta
 		);
+
+		xml::to_XML($this->meta, $this->xml_meta);
 
 		if (class_exists('User'))
 		{
@@ -356,7 +363,7 @@ abstract class Pajas_Xsltcontroller extends Controller
 		elseif ($this->transform == 'JSON')
 		{
 			$this->response->headers('Content-type', 'application/json; encoding='.Kohana::$charset);
-			$this->response->body(json_encode(xml::to_Array($this->dom->saveXML())));
+			$this->response->body(json_encode(xml::to_array($this->dom->saveXML())));
 		}
 
 		// Check client cache (ETag) and return 304 if not modified
