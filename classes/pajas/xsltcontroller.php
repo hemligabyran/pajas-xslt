@@ -385,28 +385,29 @@ abstract class Pajas_Xsltcontroller extends Controller
 			$this->xml_content_formdata = $this->xml_content->appendChild($this->dom->createElement('formdata'));
 
 		$formatted_formdata = $this->format_array($formdata);
-
 		xml::to_XML($formatted_formdata, $this->xml_content_formdata);
 		return TRUE;
 	}
 	private function format_array($formdata)
 	{
 		$formatted_formdata = array();
+		$counter            = 0;
 		foreach ($formdata as $field => $data)
 		{
+			$counter++;
 			if (is_array($data))
 			{
-				$formatted_formdata[] = array(
-					'@id'   => $field,
-					'field' => $this->format_array($data),
+				$formatted_formdata[$counter.'field'] = array_merge(
+					array('@id' => $field),
+					$this->format_array($data)
 				);
 			}
 			else
 			{
-				$formatted_formdata[] = array('field' => array(
+				$formatted_formdata[$counter.'field'] = array(
 					'@id'      => $field,
 					'$content' => $data,
-				));
+				);
 			}
 		}
 
