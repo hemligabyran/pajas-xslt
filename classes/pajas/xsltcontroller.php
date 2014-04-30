@@ -20,6 +20,13 @@ abstract class Pajas_Xsltcontroller extends Controller
 	public $auto_render = TRUE;
 
 	/**
+	 * This informs us of the type of client, normally 'desktop'
+	 * or 'mobile'. The choice is detected in the class
+	 * constructor. For now default is 'desktop',
+	 */
+	public $client_type = 'desktop';
+
+	/**
 	 * Generic errors to put in the XML
 	 */
 	public $errors = array();
@@ -119,6 +126,13 @@ abstract class Pajas_Xsltcontroller extends Controller
 			Session::instance()->delete('xsltcontroller_messages');
 		}
 		else $this->messages = array();
+		
+		// Find out what type of client we're dealing with.
+		if (substr($_SERVER['HTTP_HOST'], 0, 2) == 'm.')
+			$this->client_type = 'mobile';
+		else
+			$this->client_type = 'desktop';
+
 	}
 
 	/**
@@ -201,14 +215,15 @@ abstract class Pajas_Xsltcontroller extends Controller
 
 		$this->meta = array_merge(
 			array(
-				'protocol'    => $protocol,
-				'domain'      => isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME'],
-				'base'        => URL::base(),
-				'path'        => $this->request->uri(),
-				'action'      => $this->request->action(),
-				'controller'  => $this->request->controller(),
-				'url_params'  => $url_params,
-				'is_ajax'     => ($this->request->is_ajax()) ? 'true' : 'false',
+				'protocol'     => $protocol,
+				'domain'       => isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME'],
+				'base'         => URL::base(),
+				'path'         => $this->request->uri(),
+				'action'       => $this->request->action(),
+				'controller'   => $this->request->controller(),
+				'url_params'   => $url_params,
+				'query_string' => $_SERVER['QUERY_STRING'],
+				'is_ajax'      => ($this->request->is_ajax()) ? 'true' : 'false',
 			),
 			$this->meta
 		);
