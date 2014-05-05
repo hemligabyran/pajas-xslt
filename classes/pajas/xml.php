@@ -150,7 +150,7 @@ class Pajas_Xml
 				else
 					$array[$xml_child->tagName] = self::_to_array($xml_child);
 			elseif ($DOMNode->childNodes->length == 1)
-				$array = $xml_child->nodeValue;
+				$array[] = $xml_child->nodeValue;
 			elseif (trim($xml_child->nodeValue) != '')
 				$array[$nr] = $xml_child->nodeValue;
 		}
