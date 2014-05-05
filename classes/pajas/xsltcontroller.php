@@ -128,6 +128,8 @@ abstract class Pajas_Xsltcontroller extends Controller
 		else $this->messages = array();
 		
 		// Find out what type of client we're dealing with.
+		// Todo: Perhaps 'm.' should not be hardcoded.
+		// Todo: rename client_type to something more intelligent, like presentation_mode.
 		if (substr($_SERVER['HTTP_HOST'], 0, 2) == 'm.')
 			$this->client_type = 'mobile';
 		else
