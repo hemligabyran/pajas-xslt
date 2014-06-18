@@ -126,7 +126,7 @@ abstract class Pajas_Xsltcontroller extends Controller
 			Session::instance()->delete('xsltcontroller_messages');
 		}
 		else $this->messages = array();
-		
+
 		// Find out what type of client we're dealing with.
 		// Todo: Perhaps 'm.' should not be hardcoded.
 		// Todo: rename client_type to something more intelligent, like presentation_mode.
