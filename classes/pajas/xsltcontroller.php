@@ -213,7 +213,10 @@ abstract class Pajas_Xsltcontroller extends Controller
 			}
 		}
 
-		list($protocol) = explode('/', strtolower(Request::$initial->protocol()));
+		if ($this->request->secure())
+			$protocol = 'https';
+		else
+			$protocol = 'http';
 
 		$this->meta = array_merge(
 			array(
