@@ -203,6 +203,12 @@ abstract class Pajas_Xsltcontroller extends Controller
 		$url_params = $_GET;
 		foreach ($url_params as $key => $url_param)
 		{
+			if (substr($key, 0, 1) == '?')
+			{
+				unset($url_params[$key]);
+				$url_params[substr($key, 1)] = $url_param;
+			}
+
 			if (is_array($url_param))
 			{
 				foreach ($url_param as $nr => $data)
