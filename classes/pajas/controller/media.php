@@ -68,83 +68,91 @@ class Pajas_Controller_Media extends Controller
 		$file = Kohana::find_file('img', substr($path, 0, strlen($path) - (strlen($path_info['extension']) + 1)), $path_info['extension']);
 		if ($file && substr($mime, 0, 5) == 'image')
 		{
-			// Find the file ending
-			$file_ending = pathinfo($file, PATHINFO_EXTENSION);
-
-			// Check if it needs resizing
-			$cache_ending = '';
-
-			list($original_width, $original_height) = getimagesize($file);
-			$wh_ratio = $original_width / $original_height;
-
-			// Get params
-			if ( ! (isset($_GET['width'])     && preg_match('/^\d+$/', $_GET['width']    ))) $_GET['width']     = FALSE;
-			if ( ! (isset($_GET['height'])    && preg_match('/^\d+$/', $_GET['height']   ))) $_GET['height']    = FALSE;
-			if ( ! (isset($_GET['maxwidth'])  && preg_match('/^\d+$/', $_GET['maxwidth'] ))) $_GET['maxwidth']  = FALSE;
-			if ( ! (isset($_GET['maxheight']) && preg_match('/^\d+$/', $_GET['maxheight']))) $_GET['maxheight'] = FALSE;
-
-			// Find out new dimensions
-			if ($_GET['maxwidth']  > $original_width)  $_GET['maxwidth']  = $original_width;
-			if ($_GET['maxheight'] > $original_height) $_GET['maxheight'] = $original_height;
-
-			if ($_GET['maxwidth'] && $_GET['maxheight'] && ! $_GET['height'] && ! $_GET['width'])
+			// SVG images never needs resizing
+			if ($mime != 'image/svg+xml')
 			{
-				if (($_GET['maxwidth'] / $_GET['maxheight']) < $wh_ratio) $_GET['width']  = $_GET['maxwidth'];
-				else                                                      $_GET['height'] = $_GET['maxheight'];
-			}
-			elseif ($_GET['maxwidth'] && ! $_GET['maxheight'] && ! $_GET['height'] && ! $_GET['width'])
-				$_GET['width'] = $_GET['maxwidth'];
-			elseif ( ! $_GET['maxwidth'] && $_GET['maxheight'] && ! $_GET['height'] && ! $_GET['width'])
-				$_GET['height'] = $_GET['maxheight'];
+				// Find the file ending
+				$file_ending = pathinfo($file, PATHINFO_EXTENSION);
 
-			if ($_GET['height'] && ! $_GET['width']) $_GET['width']  = round($wh_ratio * $_GET['height']);
-			if ($_GET['width'] && ! $_GET['height']) $_GET['height'] = round($_GET['width'] / $wh_ratio);
+				// Check if it needs resizing
+				$cache_ending = '';
 
-			if ( ! $_GET['width'] && ! $_GET['height'])
-			{
-				$_GET['height'] = $original_height;
-				$_GET['width']  = $original_width;
-			}
+				list($original_width, $original_height) = getimagesize($file);
+				$wh_ratio = $original_width / $original_height;
 
-			if ($_GET['width']  != $original_width)  $cache_ending .= '_width_'.$_GET['width'];
-			if ($_GET['height'] != $original_height) $cache_ending .= '_height_'.$_GET['height'];
+				// Get params
+				if ( ! (isset($_GET['width'])     && preg_match('/^\d+$/', $_GET['width']    ))) $_GET['width']     = FALSE;
+				if ( ! (isset($_GET['height'])    && preg_match('/^\d+$/', $_GET['height']   ))) $_GET['height']    = FALSE;
+				if ( ! (isset($_GET['maxwidth'])  && preg_match('/^\d+$/', $_GET['maxwidth'] ))) $_GET['maxwidth']  = FALSE;
+				if ( ! (isset($_GET['maxheight']) && preg_match('/^\d+$/', $_GET['maxheight']))) $_GET['maxheight'] = FALSE;
 
-			$cached_filename = FALSE;
-			if ($cache_ending != '')
-			{
-				// Resizing needed
-				if (substr($path_info['dirname'], 0, 1) == '/')
-					$cached_filename = Kohana::$cache_dir.'/user_content'.$path_info['dirname'].'/'.$path_info['basename'].$cache_ending;
-				elseif ($path_info['dirname'] == '.')
-					$cached_filename = Kohana::$cache_dir.'/user_content/'.$path_info['basename'].$cache_ending;
-				else
-					$cached_filename = Kohana::$cache_dir.'/user_content/'.$path_info['dirname'].'/'.$path_info['basename'].$cache_ending;
+				// Find out new dimensions
+				if ($_GET['maxwidth']  > $original_width)  $_GET['maxwidth']  = $original_width;
+				if ($_GET['maxheight'] > $original_height) $_GET['maxheight'] = $original_height;
 
-				if ( ! file_exists($cached_filename) || filemtime($file) > filemtime($cached_filename))
+				if ($_GET['maxwidth'] && $_GET['maxheight'] && ! $_GET['height'] && ! $_GET['width'])
 				{
-					if ( ! file_exists(pathinfo($cached_filename, PATHINFO_DIRNAME)))
-						exec('mkdir -p '.pathinfo($cached_filename, PATHINFO_DIRNAME));
-
-					// Create a new cached resized file
-					$this->resize_image($file, $cached_filename, $_GET['width'], $_GET['height']);
+					if (($_GET['maxwidth'] / $_GET['maxheight']) < $wh_ratio) $_GET['width']  = $_GET['maxwidth'];
+					else                                                      $_GET['height'] = $_GET['maxheight'];
 				}
-			}
+				elseif ($_GET['maxwidth'] && ! $_GET['maxheight'] && ! $_GET['height'] && ! $_GET['width'])
+					$_GET['width'] = $_GET['maxwidth'];
+				elseif ( ! $_GET['maxwidth'] && $_GET['maxheight'] && ! $_GET['height'] && ! $_GET['width'])
+					$_GET['height'] = $_GET['maxheight'];
 
-			$this->response->headers('Content-Type', 'content-type: '.$mime.'; encoding='.Kohana::$charset.';');
+				if ($_GET['height'] && ! $_GET['width']) $_GET['width']  = round($wh_ratio * $_GET['height']);
+				if ($_GET['width'] && ! $_GET['height']) $_GET['height'] = round($_GET['width'] / $wh_ratio);
 
-			// Getting headers sent by the client.
-			$headers = array();
-			foreach ($_SERVER as $key => $value)
-			{
-				if (substr($key, 0, 5) == 'HTTP_')
+				if ( ! $_GET['width'] && ! $_GET['height'])
 				{
-					$key = str_replace(' ','-', ucwords(strtolower(str_replace('_',' ', substr($key, 5)))));
-					$headers[$key] = $value;
+					$_GET['height'] = $original_height;
+					$_GET['width']  = $original_width;
 				}
-			}
 
-			if ($cached_filename)
-				$file = $cached_filename;
+				if ($_GET['width']  != $original_width)  $cache_ending .= '_width_'.$_GET['width'];
+				if ($_GET['height'] != $original_height) $cache_ending .= '_height_'.$_GET['height'];
+
+				$cached_filename = FALSE;
+				if ($cache_ending != '')
+				{
+					// Resizing needed
+					if (substr($path_info['dirname'], 0, 1) == '/')
+						$cached_filename = Kohana::$cache_dir.'/user_content'.$path_info['dirname'].'/'.$path_info['basename'].$cache_ending;
+					elseif ($path_info['dirname'] == '.')
+						$cached_filename = Kohana::$cache_dir.'/user_content/'.$path_info['basename'].$cache_ending;
+					else
+						$cached_filename = Kohana::$cache_dir.'/user_content/'.$path_info['dirname'].'/'.$path_info['basename'].$cache_ending;
+
+					if ( ! file_exists($cached_filename) || filemtime($file) > filemtime($cached_filename))
+					{
+						if ( ! file_exists(pathinfo($cached_filename, PATHINFO_DIRNAME)))
+							exec('mkdir -p '.pathinfo($cached_filename, PATHINFO_DIRNAME));
+
+						// Create a new cached resized file
+						$this->resize_image($file, $cached_filename, $_GET['width'], $_GET['height']);
+					}
+				}
+
+				// Getting headers sent by the client.
+				$headers = array();
+				foreach ($_SERVER as $key => $value)
+				{
+					if (substr($key, 0, 5) == 'HTTP_')
+					{
+						$key = str_replace(' ','-', ucwords(strtolower(str_replace('_',' ', substr($key, 5)))));
+						$headers[$key] = $value;
+					}
+				}
+
+				if ($cached_filename)
+					$file = $cached_filename;
+
+				$this->response->headers('Content-Type', 'content-type: '.$mime.'; encoding='.Kohana::$charset.';');
+			}
+			else
+			{
+				$this->response->headers('Content-Type', 'content-type: '.$mime.';');
+			}
 
 			$this->response->headers('Last-Modified', gmdate('D, d M Y H:i:s', filemtime($file)).' GMT');
 
@@ -187,7 +195,7 @@ class Pajas_Controller_Media extends Controller
 	{
 		$path      = $this->request->param('file');
 		$path_info = pathinfo($path);
-		$mime      = File::mime_by_ext($path_info['extension']);
+		$mime      = File::mime_by_ext(strtolower($path_info['extension']));
 		$file      = Kohana::$config->load('user_content.dir').'/'.$path;
 
 		if ($file && substr($mime, 0, 5) == 'image')
@@ -197,6 +205,48 @@ class Pajas_Controller_Media extends Controller
 
 			// Check if it needs resizing
 			$cache_ending = '';
+
+			// Get filename of saved cached file stripped from exif data
+			if (substr($path_info['dirname'], 0, 1) == '/')
+				$no_exif_filename = Kohana::$cache_dir.'/user_content'.$path_info['dirname'].'/'.$path_info['basename'];
+			elseif ($path_info['dirname'] == '.')
+				$no_exif_filename = Kohana::$cache_dir.'/user_content/'.$path_info['basename'].$cache_ending;
+			else
+				$no_exif_filename = Kohana::$cache_dir.'/user_content/'.$path_info['dirname'].'/'.$path_info['basename'];
+
+			// There should be a cached file with no exif data!
+			if ( ! file_exists($no_exif_filename) || filemtime($file) > filemtime($no_exif_filename))
+			{
+				$exif_data = exif_read_data($file);
+				if (
+					$exif_data && is_array($exif_data)
+					&& isset($exif_data['Orientation']) && $exif_data['Orientation'] != '1'
+					&& isset($exif_data['MimeType']) && $exif_data['MimeType'] == 'image/jpeg'
+				)
+				{
+					// Exif rotation data found!
+
+					if     ($exif_data['Orientation'] == '8') $angle =  90;
+					elseif ($exif_data['Orientation'] == '3') $angle = 180;
+					elseif ($exif_data['Orientation'] == '6') $angle = 270;
+					else                                      $angle =   0; // ¿Que?
+
+					$img = imagerotate(imagecreatefromjpeg($file), $angle, 0);
+
+					// Make sure the path exists
+					$no_exif_pathname = pathinfo($no_exif_filename, PATHINFO_DIRNAME);
+					exec('mkdir -p "'.$no_exif_pathname.'"');
+
+					imagejpeg($img, $no_exif_filename);
+				}
+				else
+				{
+					copy($file, $no_exif_filename);
+				}
+			}
+
+			// The file should now be stripped of exif data
+			$file = $no_exif_filename;
 
 			list($original_width, $original_height) = getimagesize($file);
 			$wh_ratio = $original_width / $original_height;
@@ -214,9 +264,13 @@ class Pajas_Controller_Media extends Controller
 				else                                                      $_GET['height'] = $_GET['maxheight'];
 			}
 			elseif ($_GET['maxwidth'] && ! $_GET['maxheight'] && ! $_GET['height'] && ! $_GET['width'])
+			{
 				$_GET['width'] = $_GET['maxwidth'];
+			}
 			elseif ( ! $_GET['maxwidth'] && $_GET['maxheight'] && ! $_GET['height'] && ! $_GET['width'])
+			{
 				$_GET['height'] = $_GET['maxheight'];
+			}
 
 			if ($_GET['height'] && ! $_GET['width']) $_GET['width']  = round($wh_ratio * $_GET['height']);
 			if ($_GET['width'] && ! $_GET['height']) $_GET['height'] = round($_GET['width'] / $wh_ratio);
@@ -316,8 +370,10 @@ class Pajas_Controller_Media extends Controller
 			list($original_width, $original_height) = $image_size;
 		else return FALSE;
 
-		$type = strtolower(substr(strrchr($src,'.'),1));
-		if ($type == 'jpeg') $type = 'jpg';
+		$type = strtolower(substr(strrchr($src, '.'), 1));
+		if ($type == 'jpeg')
+			$type = 'jpg';
+
 		switch ($type)
 		{
 			case 'bmp': $img = imagecreatefromwbmp($src); break;
