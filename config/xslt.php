@@ -26,8 +26,9 @@ return array(
 		'MSIE 4.0',
 		'MSIE 5.0',
 		'MSIE 6.0',           // This is to give opera the HTML version... and also I dont trust IE6 ;)
-		'MSIE 9.0',						// IE 9 has a bug that makes it show XML-only from time to time (when pressing F5 for example)
+		'MSIE 9.0',           // IE 9 has a bug that makes it show XML-only from time to time (when pressing F5 for example)
 		'acebookexternalhit', // Facebook resolving, facebook is incompetent and cannot handle XSLT
-		'Android',						// Android seems to work fine nowdays
+		'Android',            // Android seems to work fine nowdays
+		'Safari',             // Newer Apple devices seems to not handle XSLT
 	),
 );
