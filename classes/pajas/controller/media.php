@@ -45,7 +45,7 @@ class Pajas_Controller_Media extends Controller
 		$path_info['extension'] = strtolower($path_info['extension']);
 
 		$file = Kohana::find_file('fonts', substr($path, 0, strlen($path) - (strlen($path_info['extension']) + 1)), $path_info['extension']);
-		if ($file && in_array($path_info['extension'], array('eot', 'svg', 'ttf', 'woff')))
+		if ($file && in_array($path_info['extension'], array('eot', 'svg', 'ttf', 'woff', 'otf')))
 		{
 			$this->response->headers('Last-Modified', gmdate('D, d M Y H:i:s', filemtime($file)).' GMT');
 
@@ -53,6 +53,7 @@ class Pajas_Controller_Media extends Controller
 			elseif ($path_info['extension'] == 'svg')  $this->response->headers('Content-Type', 'image/svg+xml');
 			elseif ($path_info['extension'] == 'ttf')  $this->response->headers('Content-Type', 'font/ttf');
 			elseif ($path_info['extension'] == 'woff') $this->response->headers('Content-Type', 'application/x-font-woff');
+			elseif ($path_info['extension'] == 'otf')  $this->response->headers('Content-Type', 'application/font-woff');
 
 			$this->response->body(file_get_contents($file));
 		}
