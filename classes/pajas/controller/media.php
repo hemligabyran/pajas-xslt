@@ -242,6 +242,10 @@ class Pajas_Controller_Media extends Controller
 				}
 				else
 				{
+					// Make sure the path exists
+					$no_exif_pathname = pathinfo($no_exif_filename, PATHINFO_DIRNAME);
+					exec('mkdir -p "'.$no_exif_pathname.'"');
+
 					copy($file, $no_exif_filename);
 				}
 			}
